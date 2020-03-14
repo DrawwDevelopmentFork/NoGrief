@@ -1,33 +1,33 @@
 package io.github.indicode.fabric.itsmine.mixin;
 
-import io.github.indicode.fabric.itsmine.Claim;
-import io.github.indicode.fabric.itsmine.ClaimManager;
-import io.github.indicode.fabric.itsmine.ClaimShower;
+import io.github.indicode.fabric.itsmine.*;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityCategory;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.text.LiteralText;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * @author Indigo Amann
  */
 @Mixin(PlayerEntity.class)
 public abstract class PlayerEntityMixin extends LivingEntity implements ClaimShower {
+    @Shadow @Final public PlayerScreenHandler playerScreenHandler;
+
     protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType_1, World world_1) {
         super(entityType_1, world_1);
     }
@@ -39,8 +39,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements ClaimSho
         if (entity.world.isClient()) return entity.interact(playerEntity_1, hand_1);
         Claim claim = ClaimManager.INSTANCE.getClaimAt(entity.getSenseCenterPos(), entity.world.getDimension().getType());
         if (claim != null) {
-            if (!claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.ENTITY_INTERACT)) {
-                playerEntity_1.sendMessage(new LiteralText("").append(new LiteralText("You are in a claim that does not allow you to interact with entities").formatted(Formatting.RED)).append(new LiteralText("(Use /claim show to see an outline)").formatted(Formatting.YELLOW)));
+            if (!claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.INTERACT_ENTITY)) {
+                playerEntity_1.sendMessage(Messages.MSG_INTERACT_ENTITY);
                 return false;
             }
         }
@@ -52,12 +52,30 @@ public abstract class PlayerEntityMixin extends LivingEntity implements ClaimSho
         PlayerEntity playerEntity_1 = (PlayerEntity)(Object)this;
         Claim claim = ClaimManager.INSTANCE.getClaimAt(entity.getSenseCenterPos(), entity.world.getDimension().getType());
         if (claim != null) {
-            if (!claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.ENTITY_DAMAGE)) {
-                playerEntity_1.sendMessage(new LiteralText("").append(new LiteralText("You are in a claim that does not allow you to hurt entities").formatted(Formatting.RED)).append(new LiteralText("(Use /claim show to see an outline)").formatted(Formatting.YELLOW)));
+            if (
+                    !claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.DAMAGE_ENTITY) ||
+                            (EntityUtils.isHostile(entity) && !claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.DAMAGE_ENTITY_HOSTILE)) ||
+                            (EntityUtils.isPassive(entity) && !claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.DAMAGE_ENTITY_PASSIVE))
+            ) {
+                playerEntity_1.sendMessage(Messages.MSG_DAMAGE_ENTITY);
                 ci.cancel();
             }
         }
     }
+
+//    @Redirect(method = "dropInventory", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/GameRules;getBoolean(Lnet/minecraft/world/GameRules$RuleKey;)Z"))
+//    private boolean dontTakeMyThingies(GameRules gameRules, GameRules.RuleKey<GameRules.BooleanRule> rule) {
+//        PlayerEntity playerEntity_1 = (PlayerEntity)(Object)this;
+//        Claim claim = ClaimManager.INSTANCE.getClaimAt(playerEntity_1.getSenseCenterPos(), playerEntity_1.world.getDimension().getType());
+//        if (claim != null) {
+//            playerEntity_1.sendMessage(new LiteralText("keep_inventory: " + claim.settings.getSetting(Claim.ClaimSettings.Setting.KEEP_INVENTORY) + " server: " + gameRules.getBoolean(rule)));
+//
+//            if (claim.settings.getSetting(Claim.ClaimSettings.Setting.KEEP_INVENTORY))
+//                return true;
+//        }
+//
+//        return gameRules.getBoolean(rule);
+//    }
 
     @Override
     public void setLastShowPos(BlockPos pos) {

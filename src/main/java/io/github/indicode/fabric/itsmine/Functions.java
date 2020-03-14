@@ -11,11 +11,8 @@ import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.BlockActionS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
 
@@ -36,16 +33,6 @@ public class Functions {
     public static boolean canPlayerActuallyModifyAt(ServerWorld world, PlayerEntity playerEntity_1, BlockPos blockPos_1) {
         return !world.getServer().isSpawnProtected(world, blockPos_1, playerEntity_1) && world.getWorldBorder().contains(blockPos_1);
     };
-    public static boolean canModifyAtClaimed(PlayerEntity player, BlockPos blockPos_1) {
-        if (player.world.isClient()) return false;
-        Claim claim = ClaimManager.INSTANCE.getClaimAt(blockPos_1, player.getEntityWorld().getDimension().getType());
-        if (claim != null) {
-            if (!claim.hasPermission(player.getGameProfile().getId(), Claim.Permission.SPAWN_PROTECT)) {
-                return false;
-            }
-        }
-        return true;
-    }
     public static boolean isBucketEmpty(BucketItem item) {
         return ((BucketItemMixin)item).getFluid() != Fluids.EMPTY;
     }
@@ -71,5 +58,8 @@ public class Functions {
         } else if (!flying) {
             claimFlyNow.remove(player);
         }
+    }
+    public static void updateInventory(ServerPlayerEntity player) {
+        player.inventory.updateItems();
     }
 }

@@ -23,12 +23,13 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modCompile "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	modImplementation "com.github.giantnuker:TinyConfig:${project.tiny_config_version}"
-	modImplementation /*"io.github.indicode.fabric:thimble-permissions:0.0.9"//*/"com.github.giantnuker:Thimble-Permissions:${project.thimble_permissions_version}"
-	modImplementation "com.github.giantnuker:OfflineInfo:${project.offline_info_version}"
+	//modImplementation "com.github.giantnuker:TinyConfig:${project.tiny_config_version}"
+	//modImplementation /*"io.github.indicode.fabric:thimble-permissions:0.0.9"//*/"com.github.giantnuker:Thimble-Permissions:${project.thimble_permissions_version}"
+	//modImplementation "com.github.giantnuker:OfflineInfo:${project.offline_info_version}"
 
-	include "com.github.giantnuker:TinyConfig:${project.tiny_config_version}"
-	//include "com.github.indi-code:Thimble-Permissions:${project.thimble_permissions_version}"
+	//include "com.github.giantnuker:TinyConfig:${project.tiny_config_version}"
+    implementation 'org.jetbrains:annotations:15.0'
+	modImplementation "com.github.OnBlock:Thimble-Permissions:${project.thimble_permissions_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	//modCompile "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"

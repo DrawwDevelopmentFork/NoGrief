@@ -3,6 +3,7 @@ package io.github.indicode.fabric.itsmine;
 import io.github.indicode.fabric.permissions.PermChangeBehavior;
 import io.github.indicode.fabric.permissions.Thimble;
 import net.fabricmc.api.ModInitializer;
+import net.minecraft.SharedConstants;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.lang.reflect.InvocationTargetException;
@@ -26,7 +27,11 @@ public class ItsMine implements ModInitializer {
             map.registerPermission("itsmine.admin.modify", PermChangeBehavior.UPDATE_COMMAND_TREE);
             map.registerPermission("itsmine.admin.modify_permissions", PermChangeBehavior.UPDATE_COMMAND_TREE);
             map.registerPermission("itsmine.admin.ignore_claims", PermChangeBehavior.UPDATE_COMMAND_TREE);
+            map.registerPermission("itsmine.admin.reload", PermChangeBehavior.UPDATE_COMMAND_TREE);
         });
+
+        //TODO: Enable when developing
+        //SharedConstants.isDevelopment = true;
     }
     public static String blocksToAreaString3d(int blocks) {
         int base = (int) Math.floor(Math.cbrt(blocks));

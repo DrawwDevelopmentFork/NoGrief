@@ -17,7 +17,7 @@ import java.util.Random;
 @Mixin(SpawnRestriction.class)
 public class SpawnRestrictionMixin {
 	@Inject(method = "canSpawn", at = @At("HEAD"), cancellable = true)
-	private static void canSpawnInClaim(EntityType type, IWorld world, SpawnType spawnType, BlockPos pos, Random random, CallbackInfoReturnable<Boolean> cir) {
+	private static void canSpawnInClaim(EntityType<?> type, IWorld world, SpawnType spawnType, BlockPos pos, Random random, CallbackInfoReturnable<Boolean> cir) {
 		if (ClaimManager.INSTANCE == null) {
 			cir.setReturnValue(false);
 			return;

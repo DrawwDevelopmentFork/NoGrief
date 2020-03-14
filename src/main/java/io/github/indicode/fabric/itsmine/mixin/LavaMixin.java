@@ -29,13 +29,13 @@ public class LavaMixin {
         Claim newClaim = ClaimManager.INSTANCE.getClaimAt(newPos, world.getDimension().getType());
         if (oldClaim != newClaim) {
             if (oldClaim == null) {
-                if (!(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) ci.cancel();
+                if (!newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) ci.cancel();
             }
             else if (newClaim == null) {
-                if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) ci.cancel();
+                if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) ci.cancel();
             } else {
-                if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS) ||
-                        !(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) ci.cancel();
+                if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS) ||
+                        !newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) ci.cancel();
             }
         }
     }
@@ -45,13 +45,16 @@ public class LavaMixin {
         Claim newClaim = ClaimManager.INSTANCE.getClaimAt(newPos, world.getDimension().getType());
         if (oldClaim != newClaim) {
             if (oldClaim == null) {
-                if (!(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) return false;
+                if (!newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS))
+                    return false;
             }
             else if (newClaim == null) {
-                if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) return false;
+                if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS))
+                    return false;
             } else {
-                if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS) ||
-                        !(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS)) return false;
+                if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS) ||
+                        !newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FLUID_CROSSES_BORDERS))
+                    return false;
             }
         }
         return world.setBlockState(newPos, blockState_1);

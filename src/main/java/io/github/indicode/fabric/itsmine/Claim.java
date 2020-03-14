@@ -1,21 +1,15 @@
 package io.github.indicode.fabric.itsmine;
 
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
+import blue.endless.jankson.annotation.Nullable;
 import io.github.indicode.fabric.permissions.Thimble;
 import net.minecraft.nbt.*;
-import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * @author Indigo Amann
@@ -23,11 +17,13 @@ import java.util.function.Consumer;
 public class Claim {
     public String name;
     public BlockPos min, max;
+    public @Nullable BlockPos tpPos;
     public DimensionType dimension;
     public List<Claim> children = new ArrayList<>();
     public ClaimSettings settings = new ClaimSettings();
     public PermissionManager permissionManager = new PermissionManager();
     public UUID claimBlockOwner = null;
+    public String customOwnerName, enterMessage, leaveMessage;
     public Claim() {
 
     }
@@ -35,11 +31,15 @@ public class Claim {
         fromTag(tag);
     }
     public Claim(String name, UUID claimBlockOwner, BlockPos min, BlockPos max, DimensionType dimension) {
+        this(name, claimBlockOwner, min, max, dimension, null);
+    }
+    public Claim(String name, UUID claimBlockOwner, BlockPos min, BlockPos max, DimensionType dimension, @Nullable BlockPos tpPos) {
         this.claimBlockOwner = claimBlockOwner;
         this.min = min;
         this.max = max;
         this.name = name;
         this.dimension = dimension;
+        this.tpPos = tpPos;
     }
     public boolean includesPosition(BlockPos pos) {
         return pos.getX() >= min.getX() && pos.getY() >= min.getY() && pos.getZ() >= min.getZ() &&
@@ -151,6 +151,8 @@ public class Claim {
     public int getArea() {
         return getSize().getX() * (Config.claims2d ? 1 : getSize().getY()) * getSize().getZ();
     }
+
+
     public CompoundTag toTag() {
         CompoundTag tag =  new CompoundTag();
         {
@@ -162,6 +164,11 @@ public class Claim {
             pos.putInt("maxY", max.getY());
             pos.putInt("maxZ", max.getZ());
             pos.putString("dimension", DimensionType.getId(dimension).toString());
+            if (tpPos != null) {
+                pos.putInt("tpX", this.tpPos.getX());
+                pos.putInt("tpY", this.tpPos.getY());
+                pos.putInt("tpZ", this.tpPos.getZ());
+            }
             tag.put("position", pos);
         }
         {
@@ -172,8 +179,15 @@ public class Claim {
         {
             tag.put("settings", settings.toTag());
             tag.put("permissions", permissionManager.toNBT());
-            if (claimBlockOwner != null) tag.putUuid("top_owner", claimBlockOwner);
+            if (claimBlockOwner != null) tag.putUuidOld("top_owner", claimBlockOwner);
         }
+        {
+            CompoundTag meta = new CompoundTag();
+            if (this.enterMessage != null) meta.putString("enterMsg", this.enterMessage);
+            if (this.leaveMessage != null) meta.putString("leaveMsg", this.leaveMessage);
+            tag.put("meta", meta);
+        }
+        if (this.customOwnerName != null) tag.putString("cOwnerName", this.customOwnerName);
         tag.putString("name", name);
         return tag;
     }
@@ -189,6 +203,9 @@ public class Claim {
             if (maxY == 0) maxY = 255;
             this.min = new BlockPos(minX, minY, minZ);
             this.max = new BlockPos(maxX, maxY, maxZ);
+            if (pos.contains("tpX") && pos.contains("tpY") && pos.contains("tpZ")) {
+                this.tpPos = new BlockPos(pos.getInt("tpX"), pos.getInt("tpY"), pos.getInt("tpZ"));
+            }
             this.dimension = DimensionType.byId(new Identifier(pos.getString("dimension")));
         }
         {
@@ -202,8 +219,14 @@ public class Claim {
             this.settings = new ClaimSettings(tag.getCompound("settings"));
             permissionManager = new PermissionManager();
             permissionManager.fromNBT(tag.getCompound("permissions"));
-            if (tag.containsUuid("top_owner")) claimBlockOwner = tag.getUuid("top_owner");
+            if (tag.containsUuidOld("top_owner")) claimBlockOwner = tag.getUuidOld("top_owner");
         }
+        {
+            CompoundTag meta = tag.getCompound("meta");
+            if (meta.contains("enterMsg")) this.enterMessage = meta.getString("enterMsg");
+            if (meta.contains("leaveMsg")) this.leaveMessage = meta.getString("leaveMsg");
+        }
+        if (tag.contains("cOwnerName")) this.customOwnerName = tag.getString("cOwnerName");
         name = tag.getString("name");
     }
 
@@ -215,19 +238,26 @@ public class Claim {
         //Admin
         DELETE_CLAIM("delete_claim", "Delete Claim"),
         MODIFY_SIZE("modify_size", "Modify Claim Size"),
-        CHANGE_FLAGS("modify_flags", "Change Claim Flags"),
-        CHANGE_PERMISSIONS("modify_permissions", "Change Permissions"),
+        MODIFY_FLAGS("modify_flags", "Change Claim Flags"),
+        MODIFY_PERMISSIONS("modify_permissions", "Change Permissions"),
         //Normal
-        SPAWN_PROTECT("spawn_protect", "Spawn Protection Bypass"),
-        PLACE_BREAK("place_break", "Place/Break Blocks"),
-        ACTIVATE_BLOCKS("block_interact", "Right click Blocks"),
-        USE_ITEMS_ON_BLOCKS("use_block_modifier_items", "Use Block Modifying items"),
+        MODIFY_PROPERTIES("modify_properties", "Modify Claim Properties"),
+        BUILD("build", "Place/Break Blocks"),
+        INTERACT_BLOCKS("interact_blocks", "Interact With Blocks"),
+        USE_ITEMS_ON_BLOCKS("use_items_on_blocks", "Use Block Modifying items"),
         PRESS_BUTTONS("press_buttons", "Press Buttons"),
         USE_LEVERS("use_levers", "Use Levers"),
-        OPEN_DOORS("open_doors", "Use Doors"),
-        ENTITY_INTERACT("entity_interact", "Entity Interaction"),
-        ENTITY_DAMAGE("entity_damage", "Hurt Entities"),
-        FLY("fly", "Fly");
+        INTERACT_DOORS("interact_doors", "Use Doors"),
+        INTERACT_ENTITY("interact_with_entities", "Entity Interaction"),
+        DAMAGE_ENTITY("damage_entities", "Hurt Entities"),
+        DAMAGE_ENTITY_HOSTILE("damage_entities.hostile", "Hurt Hostile Entities"),
+        DAMAGE_ENTITY_PASSIVE("damage_entities.passive", "Hurt Passive Entities"),
+        FLIGHT("flight", "Flight"),
+        CONTAINER("container", "Open Containers"),
+        CONTAINER_ENDERCHEST("container.enderchest", "Open Enderchests"),
+        CONTAINER_CHEST("container.chest", "Open Chests"),
+        CONTAINER_SHULKERBOX("container.shulkerbox", "Open Shulker Boxes");
+
         String id, name;
         Permission(String id, String name) {
             this.id = id;
@@ -434,13 +464,17 @@ public class Claim {
     }
     public static class ClaimSettings{
         public enum Setting {
-            FLIGHT_ALLOWED("fly_enabled", "Flying Enabled", true),
-            EXPLOSIONS("explosion_destruction", "Explosions Destroy Blocks", false),
+            FLIGHT_ALLOWED("flight_allowed", "Flying Enabled", true),
+            EXPLOSION_DESTRUCTION("explosion_destruction", "Explosion Destroys Blocks", false),
+            EXPLOSION_DAMAGE("explosion_damage", "Explosion Damages Entities", false),
             FLUID_CROSSES_BORDERS("fluid_crosses_borders", "Fluid Crosses Borders", false),
             FIRE_CROSSES_BORDERS("fire_crosses_borders", "Fire Crosses Borders", false),
+            FIRE_DAMAGE("fire_damage", "Fire Damages Entities", false),
             PISTON_FROM_INSIDE("pistons_inside_border", "Pistons Cross border from Inside", true),
             PISTON_FROM_OUTSIDE("pistons_outside_border", "Pistons Cross border from Outside", false),
-            MOB_SPAWNING("mob_spawn", "Natural mob spawning", true);
+            MOB_SPAWNING("mob_spawn", "Natural mob spawning", true),
+//            KEEP_INVENTORY("keep_inventory", "Keep Inventory", true),
+            ENTER_SOUND("enter_sound", "Enter Sound", false);
 
             String id, name;
             boolean defaultValue;
@@ -479,6 +513,58 @@ public class Claim {
                 if (setting == null) return;
                 this.settings.put(setting, tag.getBoolean(key));
             });
+        }
+    }
+    public enum Event {
+        ENTER_CLAIM("enter", Config.msg_enter_default),
+        LEAVE_CLAIM("leave", Config.msg_leave_default);
+
+        String id;
+        String defaultValue;
+        Event(String id, String defaultValue) {
+            this.id = id;
+            this.defaultValue = defaultValue;
+        }
+
+        @Nullable
+        public static Event getById(String id) {
+            for (Event value : values()) {
+                if (value.id.equalsIgnoreCase(id)) {
+                    return value;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    public enum HelpBook {
+        GET_STARTED("getStarted", Messages.GET_STARTED, "Get Started"),
+        COMMAND("commands", Messages.HELP, "Claim Commands"),
+        PERMS_AND_SETTINGS("perms_and_settings", Messages.SETTINGS_AND_PERMISSIONS, "Claim Permissions and Settings");
+
+        String id;
+        String title;
+        Text[] texts;
+        HelpBook(String id, Text[] texts, String title) {
+            this.id = id;
+            this.title = title;
+            this.texts = texts;
+        }
+
+        public String getCommand() {
+            return "/claim help " + this.id + " %page%";
+        }
+
+        @Nullable
+        public static HelpBook getById(String id) {
+            for (HelpBook value : values()) {
+                if (value.id.equalsIgnoreCase(id)) {
+                    return value;
+                }
+            }
+
+            return null;
         }
     }
 }
