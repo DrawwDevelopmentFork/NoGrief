@@ -32,13 +32,13 @@ public abstract class FireBlockMixin {
         Claim newClaim = ClaimManager.INSTANCE.getClaimAt(newPos, world.getDimension().getType());
         if (oldClaim != newClaim) {
             if (oldClaim == null) {
-                if (!(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) return;
+                if (!newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) return;
             }
             else if (newClaim == null) {
-                if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) return;
+                if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) return;
             } else {
-                if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS) ||
-                        !(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) return;
+                if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS) ||
+                        !newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) return;
             }
         }
         trySpreadingFire(world, newPos, int_1, random_1, int_2);
@@ -49,14 +49,14 @@ public abstract class FireBlockMixin {
             Claim newClaim = ClaimManager.INSTANCE.getClaimAt(newPos, world.getDimension().getType());
             if (oldClaim != newClaim) {
                 if (oldClaim == null) {
-                    if (!(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS))
+                    if (!newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS))
                         return false;
                 } else if (newClaim == null) {
-                    if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS))
+                    if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS))
                         return false;
                 } else {
-                    if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS) ||
-                            !(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS))
+                    if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS) ||
+                            !newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS))
                         return false;
                 }
             }
@@ -80,13 +80,13 @@ public abstract class FireBlockMixin {
             Claim newClaim = ClaimManager.INSTANCE.getClaimAt(newPos, world.getDimension().getType());
             if (oldClaim != newClaim) {
                 if (oldClaim == null) {
-                    if (!(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) iterator.remove();
+                    if (!newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) iterator.remove();
                 }
                 else if (newClaim == null) {
-                    if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) iterator.remove();
+                    if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) iterator.remove();
                 } else {
-                    if (!(Boolean) oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS) ||
-                            !(Boolean) newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) iterator.remove();
+                    if (!oldClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS) ||
+                            !newClaim.settings.getSetting(Claim.ClaimSettings.Setting.FIRE_CROSSES_BORDERS)) iterator.remove();
                 }
             }
         }

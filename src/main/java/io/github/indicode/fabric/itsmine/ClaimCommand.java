@@ -1401,7 +1401,7 @@ public class ClaimCommand {
         }
 
 
-        Text text = new LiteralText("\n").append(new LiteralText("Claims: " + source.getName()).formatted(Formatting.GOLD)).append("\n ");
+        Text text = new LiteralText("\n").append(new LiteralText("Claims: " + target).formatted(Formatting.GOLD)).append("\n ");
         boolean nextColor = false;
         for (Claim claim : claims) {
             Text cText = new LiteralText(claim.name).formatted(nextColor ? Formatting.YELLOW : Formatting.GOLD).styled((style) -> {

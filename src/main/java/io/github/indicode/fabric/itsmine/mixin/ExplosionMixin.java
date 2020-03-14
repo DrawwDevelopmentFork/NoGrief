@@ -20,7 +20,7 @@ public class ExplosionMixin {
     @Redirect(method = "collectBlocksAndDamageEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
     private BlockState theyCallMeBedrock(World world, BlockPos blockPos_1) {
         Claim claim = ClaimManager.INSTANCE.getClaimAt(blockPos_1, world.getDimension().getType());
-        if (claim != null && !world.isAir(blockPos_1)) {
+        if (claim != null && !world.isAir(blockPos_1) && !world.getBlockState(blockPos_1).getBlock().equals(Blocks.TNT)) {
             if (!claim.settings.getSetting(Claim.ClaimSettings.Setting.EXPLOSION_DESTRUCTION))
                 return Blocks.BEDROCK.getDefaultState();
         }
@@ -32,7 +32,7 @@ public class ExplosionMixin {
         Claim claim = ClaimManager.INSTANCE.getClaimAt(blockPos_1, entity.world.getDimension().getType());
         if (claim != null) {
             if (!claim.settings.getSetting(Claim.ClaimSettings.Setting.EXPLOSION_DAMAGE))
-                return false;
+                return true;
         }
 
         return entity.isImmuneToExplosion();
