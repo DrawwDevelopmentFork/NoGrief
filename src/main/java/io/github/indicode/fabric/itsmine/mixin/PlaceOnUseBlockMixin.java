@@ -27,13 +27,13 @@ public class PlaceOnUseBlockMixin extends Item {
     public boolean canActuallyModify(World world, PlayerEntity playerEntity_1, BlockPos blockPos_1) {
         if (!(world instanceof ServerWorld)) return world.canPlayerModifyAt(playerEntity_1, blockPos_1);
         Claim claim = ClaimManager.INSTANCE.getClaimAt(blockPos_1, playerEntity_1.world.getDimension().getType());
-        if (claim != null && claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.BUILD))
-            return Functions.canPlayerActuallyModifyAt((ServerWorld) world, playerEntity_1, blockPos_1);
-        else {
+        if (claim != null && !claim.hasPermission(playerEntity_1.getUuid(), Claim.Permission.BUILD)) {
             if ((Object) this instanceof LilyPadItem){
                 ((ServerWorld)world).getChunkManager().markForUpdate(blockPos_1);
             }
             return false;
         }
+
+        return world.canPlayerModifyAt(playerEntity_1, blockPos_1);
     }
 }

@@ -8,7 +8,6 @@ public class BlockUtils {
         return block instanceof AbstractChestBlock<?> || isChest(block) || isEnderchest(block) || isShulkerBox(block);
     }
 
-
     public static boolean isChest(Block block) {
         return block == Blocks.CHEST || block == Blocks.BARREL;
     }
@@ -30,6 +29,10 @@ public class BlockUtils {
     }
 
     public static boolean isDoor(Block block) {
-        return block instanceof DoorBlock;
+        return block instanceof DoorBlock || block instanceof TrapdoorBlock;
+    }
+
+    public static boolean isLectern(Block block) {
+        return block instanceof LecternBlock;
     }
 }

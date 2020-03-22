@@ -33,6 +33,10 @@ public class Messages {
 
     public static final Text MSG_DAMAGE_ENTITY = PREFIX.copy().append(new LiteralText(ChatColor.translate(Config.msg_attack_entity)).formatted(Formatting.RED));
 
+    public static final Text MSG_CANT_USE = PREFIX.copy().append(new LiteralText(ChatColor.translate(Config.msg_cant_use)).formatted(Formatting.RED));
+
+    public static final Text MSG_CANT_FARM = PREFIX.copy().append(new LiteralText(ChatColor.translate(Config.msg_cant_farm)).formatted(Formatting.RED));
+
     public static final Text[] GET_STARTED = new Text[]{
             header("How to Claim (Basics)")
                     .append(line(1, "Type &6/claim stick&e then Left click with a stick on a block to set the &6first&e corner of your claim"))
@@ -92,8 +96,8 @@ public class Messages {
                     .append(line("&6build ").append(text("&eAllows others to build (place and break blocks)")))
                     .append(line("&6interact_blocks ").append(text("&eAllows others to Interact (Right click) with blocks")))
                     .append(line("&6use_items_on_blocks ").append(text("&eAllows others to use items on blocks (Right click on blocks with an Item)")))
-                    .append(line("&6press_button ").append(text("&eAllows others to press Buttons")))
-                    .append(line("&6use_levers ").append(text("&eAllows others to ue Levers")))
+                    .append(line("&6use.button ").append(text("&eAllows others to press Buttons")))
+                    .append(line("&6use.levers ").append(text("&eAllows others to ue Levers")))
                     .append(line("&6interact_doors ").append(text("&eAllows others to Interact with Doors")))
                     .append(line("&6interact_entity ").append(text("&eAllows others to Interact with Entities (Right click on Entities)"))),
 
@@ -106,7 +110,7 @@ public class Messages {
             header("Permissions")
                     .append(line("&6container.enderchest ").append(text("&eAllows others to only open Ender Chest containers")))
                     .append(line("&6container.shulkerbox ").append(text("&eAllows others to only open shulkerox container")))
-                    .append(line("&6modify_properties ").append(text("&eAllows others to modify the properties of the claim (e.g: Join/leave messages)")))
+                    .append(line("&6modify.properties ").append(text("&eAllows others to modify the properties of the claim (e.g: Join/leave messages)")))
                     .append(line("&6container ").append(text("&eAllows others to open containers (e.g: Chest, EnderChest etc)")))
                     .append(line("&6container ").append(text("&eAllows others to open containers (e.g: Chest, EnderChest etc)")))
                     .append(line("&6container.chest ").append(text("&eAllows others to only open chest containers (Chests and Barrels)"))),
@@ -122,7 +126,8 @@ public class Messages {
                     .append(line("&6fire_damage ").append(text("Fire damages entities")))
                     .append(line("&6piston_from_inside ").append(text("Let pistons to move blocks to outside the claim")))
                     .append(line("&6mob_spawning ").append(text("Allow mobs to spawn inside the claim")))
-                    .append(line("&6enter_sound ").append(text("Play a sound when entering the claim"))),
+                    .append(line("&6enter_sound ").append(text("Play a sound when entering the claim")))
+                    .append(line("&6break_farmlands ").append(text("Allow turning Farmlands into Dirt by jumping on them")))
     };
 
     private static Text header(String title) {

@@ -26,7 +26,7 @@ import java.util.Random;
 public abstract class FireBlockMixin {
     @Shadow protected abstract void trySpreadingFire(World world_1, BlockPos blockPos_1, int int_1, Random random_1, int int_2);
 
-    @Redirect(method = "scheduledTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/FireBlock;trySpreadingFire(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;ILjava/util/Random;I)V"))
+    @Redirect(method = "randomTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/FireBlock;trySpreadingFire(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;ILjava/util/Random;I)V"))
     private void dontBurnClaims(FireBlock fireBlock, World world, BlockPos newPos, int int_1, Random random_1, int int_2, BlockState blockState_1, ServerWorld serverWorld_1, BlockPos oldPos, Random random_1_) {
         Claim oldClaim = ClaimManager.INSTANCE.getClaimAt(oldPos, world.getDimension().getType());
         Claim newClaim = ClaimManager.INSTANCE.getClaimAt(newPos, world.getDimension().getType());
@@ -43,7 +43,7 @@ public abstract class FireBlockMixin {
         }
         trySpreadingFire(world, newPos, int_1, random_1, int_2);
     }
-    @Redirect(method = "scheduledTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z", ordinal = 1))
+    @Redirect(method = "randomTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/world/ServerWorld;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z", ordinal = 1))
     private boolean dontCauseFire2(ServerWorld world, BlockPos newPos, BlockState blockState_1, int int_1, BlockState blockState_1_, ServerWorld serverWorld_1, BlockPos oldPos, Random random_1_) {
             Claim oldClaim = ClaimManager.INSTANCE.getClaimAt(oldPos, world.getDimension().getType());
             Claim newClaim = ClaimManager.INSTANCE.getClaimAt(newPos, world.getDimension().getType());

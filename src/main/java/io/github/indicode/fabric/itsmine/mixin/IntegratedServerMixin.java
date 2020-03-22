@@ -2,11 +2,11 @@ package io.github.indicode.fabric.itsmine.mixin;
 
 import com.google.gson.JsonElement;
 import io.github.indicode.fabric.itsmine.ClaimManager;
-import net.minecraft.class_4952;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.world.level.LevelGeneratorOptions;
 import net.minecraft.world.level.LevelGeneratorType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,7 +24,7 @@ import java.io.IOException;
 @Mixin(IntegratedServer.class)
 public class IntegratedServerMixin {
     @Inject(method = "loadWorld", at = @At("RETURN"))
-    private void loadClaims(String name, String serverName, long seed, class_4952 arg, CallbackInfo ci) {
+    private void loadClaims(String name, String serverName, long seed, LevelGeneratorOptions arg, CallbackInfo ci) {
         File claims = new File(((MinecraftServer)(Object)this).getLevelStorage().getSavesDirectory() + "/" + name + "/claims.dat");
         File claims_old = new File(((MinecraftServer)(Object)this).getLevelStorage().getSavesDirectory() + "/" + name + "/claims.dat_old");
         ClaimManager.INSTANCE = new ClaimManager();

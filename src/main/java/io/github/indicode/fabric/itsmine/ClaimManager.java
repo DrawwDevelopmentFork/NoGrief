@@ -9,6 +9,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
+import org.jetbrains.annotations.Nullable;
 
 import javax.naming.Name;
 import java.util.*;
@@ -85,10 +86,14 @@ public class ClaimManager {
         tag.put("ignoring", ignoring);
         return tag;
     }
+    @Nullable
     public Claim getClaimAt(BlockPos pos, DimensionType dimension) {
         for (Claim claim : claimsByName.values()) {
-            if (claim.dimension.equals(dimension) && claim.includesPosition(pos)) return claim.getZoneCovering(pos);
+            if (claim.dimension.equals(dimension) && claim.includesPosition(pos)) {
+                return claim.getZoneCovering(pos);
+            }
         }
+
         return null;
     }
     public void fromNBT(CompoundTag tag) {

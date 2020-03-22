@@ -51,15 +51,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements ClaimSho
         if (entity.world.isClient()) return;
         PlayerEntity playerEntity_1 = (PlayerEntity)(Object)this;
         Claim claim = ClaimManager.INSTANCE.getClaimAt(entity.getSenseCenterPos(), entity.world.getDimension().getType());
-        if (claim != null) {
-            if (
-                    !claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.DAMAGE_ENTITY) ||
-                            (EntityUtils.isHostile(entity) && !claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.DAMAGE_ENTITY_HOSTILE)) ||
-                            (EntityUtils.isPassive(entity) && !claim.hasPermission(playerEntity_1.getGameProfile().getId(), Claim.Permission.DAMAGE_ENTITY_PASSIVE))
-            ) {
-                playerEntity_1.sendMessage(Messages.MSG_DAMAGE_ENTITY);
-                ci.cancel();
-            }
+
+        if (claim != null && !EntityUtils.canAttack(((PlayerEntity) (Object) this).getUuid(), claim, entity)) {
+            playerEntity_1.sendMessage(Messages.MSG_DAMAGE_ENTITY);
+            ci.cancel();
         }
     }
 

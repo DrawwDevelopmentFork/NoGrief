@@ -5,7 +5,6 @@ import net.minecraft.block.*;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItem;
-import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.s2c.play.BlockUpdateS2CPacket;
@@ -31,70 +30,53 @@ import java.util.UUID;
  * @author Indigo Amann
  */
 @Mixin(ServerPlayerInteractionManager.class)
-public class ServerPlayerInteractionManagerMixin {
+public abstract class ServerPlayerInteractionManagerMixin {
     @Shadow public ServerPlayerEntity player;
+    @Shadow public ServerWorld world;
+
+    @Shadow private int startMiningTime;
 
     @Redirect(method = "interactBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;onUse(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Lnet/minecraft/util/ActionResult;"))
-    public ActionResult activateIfPossible(BlockState state, World world, PlayerEntity playerEntity_1, Hand hand_1, BlockHitResult blockHitResult_1) {
-        BlockPos pos = blockHitResult_1.getBlockPos();
-        Claim claim = ClaimManager.INSTANCE.getClaimAt(pos, world.getDimension().getType());
+    private ActionResult interactIfPossible(BlockState blockState, World world, PlayerEntity player, Hand hand, BlockHitResult hit, PlayerEntity player1, World world1, ItemStack itemStack, Hand hand1, BlockHitResult hitResult1) {
+        BlockPos pos = hit.getBlockPos();
+        Claim claim = ClaimManager.INSTANCE.getClaimAt(pos, player.world.getDimension().getType());
         if (claim != null) {
-            UUID uuid = playerEntity_1.getGameProfile().getId();
-            if (
-                    claim.hasPermission(uuid, Claim.Permission.INTERACT_BLOCKS) ||
-                            (BlockUtils.isButton(state.getBlock()) && claim.hasPermission(uuid, Claim.Permission.PRESS_BUTTONS)) ||
-                            (BlockUtils.isLever(state.getBlock()) && claim.hasPermission(uuid, Claim.Permission.USE_LEVERS)) ||
-                            (BlockUtils.isDoor(state.getBlock()) && claim.hasPermission(uuid, Claim.Permission.INTERACT_DOORS)) ||
-                            (BlockUtils.isContainer(state.getBlock()) && claim.hasPermission(uuid, Claim.Permission.CONTAINER)) ||
-                            (BlockUtils.isChest(state.getBlock()) && claim.hasPermission(uuid, Claim.Permission.CONTAINER_CHEST)) ||
-                            (BlockUtils.isEnderchest(state.getBlock()) && claim.hasPermission(uuid, Claim.Permission.CONTAINER_ENDERCHEST)) ||
-                            (BlockUtils.isShulkerBox(state.getBlock()) && claim.hasPermission(uuid, Claim.Permission.CONTAINER_SHULKERBOX))
-            ) {
-                return state.onUse(world, playerEntity_1, hand_1, blockHitResult_1);
-            }
-            else {
-                if (state.getBlock() instanceof DoorBlock && playerEntity_1 instanceof ServerPlayerEntity) {
-                    DoubleBlockHalf half = state.get(DoorBlock.HALF);
-                    ((ServerPlayerEntity) playerEntity_1).networkHandler.sendPacket(new BlockUpdateS2CPacket(world, half == DoubleBlockHalf.LOWER ? pos.up() : pos.down(1)));
+            if (!Functions.canInteractWith(claim, blockState.getBlock(), player.getUuid())) {
+                if (!itemStack.isEmpty() && !(itemStack.getItem() instanceof BlockItem)) {
+                    player.sendMessage(Messages.MSG_INTERACT_BLOCK);
+                } else if (BlockUtils.isContainer(blockState.getBlock())) {
+                    player.addMessage(Messages.MSG_OPEN_CONTAINER, true);
                 }
 
-                if (BlockUtils.isContainer(state.getBlock())) {
-                    playerEntity_1.sendMessage(Messages.MSG_OPEN_CONTAINER);
-                }
-
-                player.inventory.markDirty();
-                player.inventory.updateItems();
                 return ActionResult.FAIL;
             }
+//            else {
+//                if (blockState.getBlock() instanceof DoorBlock && player instanceof ServerPlayerEntity) {
+//                    DoubleBlockHalf blockHalf = blockState.get(DoorBlock.HALF);
+//                    ((ServerPlayerEntity) player).networkHandler.sendPacket(new BlockUpdateS2CPacket(world, blockHalf == DoubleBlockHalf.LOWER ? pos.up() : pos.down(1)));
+//                }
+//            }
         }
 
-        player.inventory.updateItems();
-        return state.onUse(world, playerEntity_1, hand_1, blockHitResult_1);
+        return blockState.onUse(world, player, hand, hit);
     }
 
-
-
     @Redirect(method = "interactBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;isEmpty()Z", ordinal = 2))
-    public boolean allowItemUse(ItemStack stack, PlayerEntity playerEntity_1, World world_1, ItemStack itemStack_1, Hand hand_1, BlockHitResult blockHitResult_1) {
-        BlockPos pos = blockHitResult_1.getBlockPos().offset(blockHitResult_1.getSide());
-        Claim claim = ClaimManager.INSTANCE.getClaimAt(pos, playerEntity_1.world.getDimension().getType());
+    private boolean interactWithItemIfPossible(ItemStack stack, PlayerEntity player, World world, ItemStack itemStack, Hand hand, BlockHitResult hitResult) {
+        BlockPos pos = hitResult.getBlockPos().offset(hitResult.getSide());
+        Claim claim = ClaimManager.INSTANCE.getClaimAt(pos, world.getDimension().getType());
         if (claim != null && !stack.isEmpty()) {
-            UUID uuid = playerEntity_1.getGameProfile().getId();
-            if (
-                    claim.hasPermission(uuid, Claim.Permission.USE_ITEMS_ON_BLOCKS) ||
-                            (stack.getItem() instanceof BlockItem && claim.hasPermission(uuid, Claim.Permission.BUILD)) ||
-                            (stack.getItem() instanceof BucketItem && claim.hasPermission(uuid, Claim.Permission.BUILD))
-            )
+            if (Functions.canInteractUsingItem(claim, stack.getItem(), player.getUuid())) {
                 return false;
+            }
 
-            if (!playerEntity_1.getStackInHand(hand_1).isEmpty())
-                playerEntity_1.sendMessage(Messages.MSG_PLACE_BLOCK);
+            if (stack.getItem() instanceof BlockItem) {
+                player.addMessage(Messages.MSG_PLACE_BLOCK, true);
+            }
 
-            Functions.updateInventory(player);
             return true;
         }
 
-        Functions.updateInventory(player);
         return stack.isEmpty();
     }
 
@@ -119,12 +101,13 @@ public class ServerPlayerInteractionManagerMixin {
         Claim claim = ClaimManager.INSTANCE.getClaimAt(pos, player.world.getDimension().getType());
         if (claim != null) {
             UUID uuid = player.getGameProfile().getId();
-            if (
-                    claim.hasPermission(uuid, Claim.Permission.BUILD)
-            ) return Functions.canPlayerActuallyModifyAt(world, player, pos);
-            player.sendMessage(Messages.MSG_BREAK_BLOCK);
-            return false;
+            if (!claim.hasPermission(uuid, Claim.Permission.BUILD)) {
+                player.addMessage(Messages.MSG_BREAK_BLOCK, true);
+                return false;
+            }
+
         }
+
         return world.canPlayerModifyAt(player, pos);
     }
 }

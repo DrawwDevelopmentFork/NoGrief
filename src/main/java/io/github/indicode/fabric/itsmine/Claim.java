@@ -1,7 +1,6 @@
 package io.github.indicode.fabric.itsmine;
 
 import blue.endless.jankson.annotation.Nullable;
-import io.github.indicode.fabric.permissions.Thimble;
 import net.minecraft.nbt.*;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -10,6 +9,8 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.dimension.DimensionType;
 
 import java.util.*;
+
+import static io.github.indicode.fabric.itsmine.NBTUtil.*;
 
 /**
  * @author Indigo Amann
@@ -71,14 +72,20 @@ public class Claim {
         ) return true;
         else return checkOther && claim.intersects(this, false);
     }
+    @Nullable
     public Claim getZoneCovering(BlockPos pos) {
         if (includesPosition(pos)) {
             for (Claim child : children) {
                 Claim value = child.getZoneCovering(pos);
-                if (value != null) return value;
+                if (value != null) {
+                    return value;
+                }
             }
+
             return this;
-        } else return null;
+        }
+
+        return null;
     }
     /*public ClaimSettings getSettingsAt(BlockPos pos) {
         Claim at = getZoneCovering(pos);
@@ -179,7 +186,9 @@ public class Claim {
         {
             tag.put("settings", settings.toTag());
             tag.put("permissions", permissionManager.toNBT());
-            if (claimBlockOwner != null) tag.putUuidOld("top_owner", claimBlockOwner);
+            if(claimBlockOwner != null) tag.putUuidNew("top_owner", claimBlockOwner);
+//            if (claimBlockOwner != null) tag.putUuidNew("top_owner", claimBlockOwner);
+
         }
         {
             CompoundTag meta = new CompoundTag();
@@ -219,7 +228,8 @@ public class Claim {
             this.settings = new ClaimSettings(tag.getCompound("settings"));
             permissionManager = new PermissionManager();
             permissionManager.fromNBT(tag.getCompound("permissions"));
-            if (tag.containsUuidOld("top_owner")) claimBlockOwner = tag.getUuidOld("top_owner");
+            if (containsUUID(tag, "top_owner")) claimBlockOwner = getUUID(tag,"top_owner");
+
         }
         {
             CompoundTag meta = tag.getCompound("meta");
@@ -236,19 +246,18 @@ public class Claim {
 
     public enum Permission {
         //Admin
-        DELETE_CLAIM("delete_claim", "Delete Claim"),
-        MODIFY_SIZE("modify_size", "Modify Claim Size"),
-        MODIFY_FLAGS("modify_flags", "Change Claim Flags"),
-        MODIFY_PERMISSIONS("modify_permissions", "Change Permissions"),
+        REMOVE_CLAIM("remove_claim", "Remove Claim"),
+        MODIFY_SIZE("modify.size", "Modify Claim Size"),
+        MODIFY_SETTINGS("modify.settings", "Change Claim Settings"),
+        MODIFY_PERMISSIONS("modify.permissions", "Change Permissions"),
         //Normal
-        MODIFY_PROPERTIES("modify_properties", "Modify Claim Properties"),
+        MODIFY_PROPERTIES("modify.properties", "Modify Claim Properties"),
         BUILD("build", "Place/Break Blocks"),
         INTERACT_BLOCKS("interact_blocks", "Interact With Blocks"),
         USE_ITEMS_ON_BLOCKS("use_items_on_blocks", "Use Block Modifying items"),
-        PRESS_BUTTONS("press_buttons", "Press Buttons"),
-        USE_LEVERS("use_levers", "Use Levers"),
+        USE_LEVERS("use.levers", "Use Levers"),
         INTERACT_DOORS("interact_doors", "Use Doors"),
-        INTERACT_ENTITY("interact_with_entities", "Entity Interaction"),
+        INTERACT_ENTITY("interact_entity", "Entity Interaction"),
         DAMAGE_ENTITY("damage_entities", "Hurt Entities"),
         DAMAGE_ENTITY_HOSTILE("damage_entities.hostile", "Hurt Hostile Entities"),
         DAMAGE_ENTITY_PASSIVE("damage_entities.passive", "Hurt Passive Entities"),
@@ -256,7 +265,9 @@ public class Claim {
         CONTAINER("container", "Open Containers"),
         CONTAINER_ENDERCHEST("container.enderchest", "Open Enderchests"),
         CONTAINER_CHEST("container.chest", "Open Chests"),
-        CONTAINER_SHULKERBOX("container.shulkerbox", "Open Shulker Boxes");
+        CONTAINER_SHULKERBOX("container.shulkerbox", "Open Shulker Boxes"),
+        USE_ENDER_PEARL("use.enderpearl", "Use Ender Pearls"),
+        USE_BUTTONS("use.button", "Use Buttons");
 
         String id, name;
         Permission(String id, String name) {
@@ -278,10 +289,15 @@ public class Claim {
             return playerPermissions.get(player) != null && playerPermissions.get(player).isPermissionSet(permission);
         }
         public boolean hasPermission(UUID player, Permission permission) {
-            if (isPermissionSet(player, permission)) return playerPermissions.get(player).hasPermission(permission);
+            if (isPermissionSet(player, permission))
+                return playerPermissions.get(player).hasPermission(permission);
+
             for (Map.Entry<String, ClaimPermissionMap> entry : groupPermissions.entrySet()) {
-                if (Thimble.PERMISSIONS.hasPermission(entry.getKey(), player) && entry.getValue().hasPermission(permission)) return true;
+//                if (Thimble.PERMISSIONS.hasPermission(entry.getKey(), player) && entry.getValue().hasPermission(permission))
+//                    return true;
+                return ItsMine.permissions().hasPermission(player, entry.getKey()) && entry.getValue().hasPermission(permission);
             }
+
             return defaults.hasPermission(permission);
         }
         public void setPermission(UUID player, Permission permission, boolean enabled) {
@@ -474,7 +490,8 @@ public class Claim {
             PISTON_FROM_OUTSIDE("pistons_outside_border", "Pistons Cross border from Outside", false),
             MOB_SPAWNING("mob_spawn", "Natural mob spawning", true),
 //            KEEP_INVENTORY("keep_inventory", "Keep Inventory", true),
-            ENTER_SOUND("enter_sound", "Enter Sound", false);
+            ENTER_SOUND("enter_sound", "Enter Sound", false),
+            BREAK_FARMLANDS("break_farmlands", "Break Farmlands", false);
 
             String id, name;
             boolean defaultValue;

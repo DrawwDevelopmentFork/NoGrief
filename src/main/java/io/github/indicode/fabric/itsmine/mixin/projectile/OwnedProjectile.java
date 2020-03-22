@@ -1,4 +1,4 @@
-package io.github.indicode.fabric.itsmine.mixin;
+package io.github.indicode.fabric.itsmine.mixin.projectile;
 
 import net.minecraft.entity.projectile.Projectile;
 import org.spongepowered.asm.mixin.Mixin;
